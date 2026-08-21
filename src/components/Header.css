@@ -1,0 +1,145 @@
+.site-header {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.9rem 1.5rem;
+  border-bottom: 1px solid rgba(216, 196, 154, 0.12);
+  background: rgba(10, 14, 24, 0.72);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  text-decoration: none;
+  color: #f5e6c8;
+  flex-shrink: 0;
+}
+
+.brand-mark {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.55rem;
+  color: #f0c14b;
+  line-height: 1;
+}
+
+.brand-text {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.nav {
+  display: flex;
+  gap: 0.35rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.nav a {
+  color: #a8b0c4;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.4rem 0.7rem;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.nav a:hover {
+  color: #f5e6c8;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.nav a.active {
+  color: #f0c14b;
+  background: rgba(240, 193, 75, 0.1);
+}
+
+.profile-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-decoration: none;
+  color: inherit;
+  padding: 0.3rem 0.65rem 0.3rem 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid #3a4560;
+  flex-shrink: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.profile-chip.border-gold {
+  border-color: #d4a017;
+  box-shadow: 0 0 12px rgba(212, 160, 23, 0.35);
+}
+
+.profile-chip.border-aurora {
+  border-color: #6ec6b0;
+  box-shadow: 0 0 14px rgba(110, 198, 176, 0.4);
+}
+
+.profile-chip.border-ember {
+  border-color: #e07040;
+  box-shadow: 0 0 14px rgba(224, 112, 64, 0.4);
+}
+
+.profile-chip.border-void {
+  border-color: #8b6cff;
+  box-shadow: 0 0 14px rgba(100, 80, 180, 0.45);
+}
+
+.profile-chip.border-infinity {
+  border-image: linear-gradient(120deg, #f0c14b, #6ec6b0, #e07040) 1;
+  border-style: solid;
+  box-shadow: 0 0 16px rgba(240, 193, 75, 0.35);
+}
+
+.profile-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #1e2a40;
+  font-size: 1rem;
+}
+
+.profile-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.profile-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #f5e6c8;
+}
+
+.profile-title {
+  font-size: 0.68rem;
+  color: #8a93a8;
+}
+
+@media (max-width: 780px) {
+  .site-header {
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+  }
+
+  .nav {
+    order: 3;
+    width: 100%;
+  }
+
+  .profile-meta {
+    display: none;
+  }
+}
