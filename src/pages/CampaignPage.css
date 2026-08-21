@@ -1,0 +1,120 @@
+.campaign-map.page,
+.campaign-locked.page,
+.campaign-play {
+  padding: 1rem 0 2.5rem;
+}
+
+.page-head h1 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+}
+
+.camp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 0.4rem;
+  margin-top: 1.25rem;
+}
+
+.camp-tile {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  gap: 0.1rem;
+}
+
+.camp-tile.locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.camp-tile.current {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.camp-tile.cleared {
+  background: var(--success-soft);
+}
+
+.camp-tile .num {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+}
+
+.camp-tile .time {
+  font-size: 0.55rem;
+  color: var(--muted);
+}
+
+.camp-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: min(92vw, 580px);
+  margin: 0 auto 0.75rem;
+}
+
+.back-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.back-link:hover {
+  color: var(--ink);
+}
+
+.best {
+  font-size: 0.85rem;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.toast-ach {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 70;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 1rem;
+  max-width: 260px;
+  box-shadow: var(--elevated);
+}
+
+.toast-ach strong {
+  color: var(--accent-ink);
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.toast-ach ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.1rem;
+}
+
+.campaign-locked {
+  text-align: center;
+  max-width: 400px;
+  margin: 2rem auto;
+}
+
+.campaign-locked h1 {
+  font-family: var(--font-display);
+}

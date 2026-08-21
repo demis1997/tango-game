@@ -3,7 +3,68 @@ import type { CellValue, Constraint, HintResult } from './types'
 
 const LABEL = { 0: 'Sun', 1: 'Moon' } as const
 
-/** Find a logically forced cell with highlight metadata */
+function whyOtherFails(
+  grid: CellValue[][],
+  r: number,
+  c: number,
+  bad: 0 | 1,
+  constraints: Constraint[],
+): string {
+  const size = grid.length
+  const half = size / 2
+  const trial = cloneGrid(grid)
+  trial[r]![c] = bad
+
+  // Constraint clash
+  for (const cons of constraints) {
+    const isA = cons.r1 === r && cons.c1 === c
+    const isB = cons.r2 === r && cons.c2 === c
+    if (!isA && !isB) continue
+    const or = isA ? cons.r2 : cons.r1
+    const oc = isA ? cons.c2 : cons.c1
+    const other = trial[or]![oc]
+    if (other === null) continue
+    if (cons.type === 'eq' && other !== bad) {
+      return `a ${LABEL[bad]} would break the = link with its neighbor`
+    }
+    if (cons.type === 'neq' && other === bad) {
+      return `a ${LABEL[bad]} would break the × link with its neighbor`
+    }
+  }
+
+  // Triple in row
+  const row = trial[r]!
+  for (let i = 0; i < size - 2; i++) {
+    if (row[i] !== null && row[i] === row[i + 1] && row[i + 1] === row[i + 2]) {
+      return `a ${LABEL[bad]} would make three ${LABEL[bad]}s in a row`
+    }
+  }
+  // Triple in col
+  for (let i = 0; i < size - 2; i++) {
+    const a = trial[i]![c]
+    const b = trial[i + 1]![c]
+    const d = trial[i + 2]![c]
+    if (a !== null && a === b && b === d) {
+      return `a ${LABEL[bad]} would make three ${LABEL[bad]}s in a column`
+    }
+  }
+
+  // Balance
+  let rowCount = 0
+  for (let i = 0; i < size; i++) if (row[i] === bad) rowCount++
+  if (rowCount > half) {
+    return `row ${r + 1} would then have too many ${LABEL[bad]}s`
+  }
+  let colCount = 0
+  for (let i = 0; i < size; i++) if (trial[i]![c] === bad) colCount++
+  if (colCount > half) {
+    return `column ${c + 1} would then have too many ${LABEL[bad]}s`
+  }
+
+  return `a ${LABEL[bad]} is illegal here`
+}
+
+/** Find a logically forced cell — always explains why that symbol is required. */
 export function findHint(
   grid: CellValue[][],
   constraints: Constraint[],
@@ -24,8 +85,8 @@ export function findHint(
           value,
           reason:
             cons.type === 'eq'
-              ? `These cells are linked by =, so they must both be ${LABEL[value]}s.`
-              : `These cells are linked by ×, so this cell must be a ${LABEL[value]}.`,
+              ? `Because of the = between these cells, this one must match its neighbor — so it is a ${LABEL[value]}.`
+              : `Because of the × between these cells, this one must differ from its neighbor — so it is a ${LABEL[value]}.`,
           highlight: { type: 'constraint', constraint: cons },
         }
       }
@@ -39,8 +100,8 @@ export function findHint(
           value,
           reason:
             cons.type === 'eq'
-              ? `These cells are linked by =, so they must both be ${LABEL[value]}s.`
-              : `These cells are linked by ×, so this cell must be a ${LABEL[value]}.`,
+              ? `Because of the = between these cells, this one must match its neighbor — so it is a ${LABEL[value]}.`
+              : `Because of the × between these cells, this one must differ from its neighbor — so it is a ${LABEL[value]}.`,
           highlight: { type: 'constraint', constraint: cons },
         }
       }
@@ -63,7 +124,7 @@ export function findHint(
             row: r,
             col: c,
             value: other,
-            reason: `Row ${r + 1} already has ${half} ${LABEL[v]}s, so the remaining cells must be ${LABEL[other]}s.`,
+            reason: `Row ${r + 1} already has all ${half} of its ${LABEL[v]}s, so this cell must be a ${LABEL[other]}.`,
             highlight: { type: 'row', row: r },
           }
         }
@@ -87,7 +148,7 @@ export function findHint(
             row: r,
             col: c,
             value: other,
-            reason: `Column ${c + 1} already has ${half} ${LABEL[v]}s, so the remaining cells must be ${LABEL[other]}s.`,
+            reason: `Column ${c + 1} already has all ${half} of its ${LABEL[v]}s, so this cell must be a ${LABEL[other]}.`,
             highlight: { type: 'col', col: c },
           }
         }
@@ -107,7 +168,7 @@ export function findHint(
               row: r,
               col: c - 1,
               value: v,
-              reason: `Two ${LABEL[a]}s are adjacent — the next cell must be a ${LABEL[v]} to avoid three in a row.`,
+              reason: `Two ${LABEL[a]}s sit side by side — this cell must be a ${LABEL[v]} or you’d get three in a row.`,
               highlight: { type: 'row', row: r },
             }
           }
@@ -119,7 +180,7 @@ export function findHint(
               row: r,
               col: c + 2,
               value: v,
-              reason: `Two ${LABEL[a]}s are adjacent — the next cell must be a ${LABEL[v]} to avoid three in a row.`,
+              reason: `Two ${LABEL[a]}s sit side by side — this cell must be a ${LABEL[v]} or you’d get three in a row.`,
               highlight: { type: 'row', row: r },
             }
           }
@@ -140,7 +201,7 @@ export function findHint(
               row: r - 1,
               col: c,
               value: v,
-              reason: `Two ${LABEL[a]}s are stacked — this cell must be a ${LABEL[v]} to avoid three in a column.`,
+              reason: `Two ${LABEL[a]}s are stacked — this cell must be a ${LABEL[v]} or you’d get three in a column.`,
               highlight: { type: 'col', col: c },
             }
           }
@@ -152,7 +213,7 @@ export function findHint(
               row: r + 2,
               col: c,
               value: v,
-              reason: `Two ${LABEL[a]}s are stacked — this cell must be a ${LABEL[v]} to avoid three in a column.`,
+              reason: `Two ${LABEL[a]}s are stacked — this cell must be a ${LABEL[v]} or you’d get three in a column.`,
               highlight: { type: 'col', col: c },
             }
           }
@@ -173,7 +234,7 @@ export function findHint(
             row: r,
             col: c + 1,
             value: v,
-            reason: `Gap technique: ${LABEL[a]} · ${LABEL[a]} forces the middle cell to be a ${LABEL[v]}.`,
+            reason: `A ${LABEL[a]} with a gap then another ${LABEL[a]} — the middle must be a ${LABEL[v]} to avoid three in a row.`,
             highlight: { type: 'row', row: r },
           }
         }
@@ -193,7 +254,7 @@ export function findHint(
             row: r + 1,
             col: c,
             value: v,
-            reason: `Gap technique: ${LABEL[a]} · ${LABEL[a]} forces the middle cell to be a ${LABEL[v]}.`,
+            reason: `A ${LABEL[a]} with a gap then another ${LABEL[a]} — the middle must be a ${LABEL[v]} to avoid three in a column.`,
             highlight: { type: 'col', col: c },
           }
         }
@@ -209,27 +270,33 @@ export function findHint(
         if (canPlace(grid, r, c, v, constraints)) opts.push(v)
       }
       if (opts.length === 1) {
+        const value = opts[0]!
+        const bad = (1 - value) as 0 | 1
+        const why = whyOtherFails(grid, r, c, bad, constraints)
         return {
           row: r,
           col: c,
-          value: opts[0]!,
-          reason: `Only a ${LABEL[opts[0]!]} fits here without breaking a rule.`,
+          value,
+          reason: `This cell must be a ${LABEL[value]} — ${why}.`,
           highlight: { type: 'cell', row: r, col: c },
         }
       }
     }
   }
 
+  // Last resort: explain via contradiction against the unique solution value
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
-      if (grid[r]![c] === null) {
-        return {
-          row: r,
-          col: c,
-          value: solution[r]![c]!,
-          reason: `This cell is a ${LABEL[solution[r]![c]!]}.`,
-          highlight: { type: 'cell', row: r, col: c },
-        }
+      if (grid[r]![c] !== null) continue
+      const value = solution[r]![c]!
+      const bad = (1 - value) as 0 | 1
+      const why = whyOtherFails(grid, r, c, bad, constraints)
+      return {
+        row: r,
+        col: c,
+        value,
+        reason: `This cell must be a ${LABEL[value]} — ${why}.`,
+        highlight: { type: 'cell', row: r, col: c },
       }
     }
   }

@@ -60,6 +60,38 @@
   gap: 0.35rem;
 }
 
+.profile-chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  background: var(--surface);
+}
+
+.profile-chip.border-gold {
+  border-color: #d4a017;
+}
+.profile-chip.border-aurora {
+  border-color: #3d9a7a;
+}
+.profile-chip.border-ember {
+  border-color: #e07040;
+}
+.profile-chip.border-void {
+  border-color: #6a5acd;
+}
+.profile-chip.border-infinity {
+  border-color: var(--accent);
+}
+
+.chip-avatar {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
 .theme-toggle {
   width: 36px;
   height: 36px;

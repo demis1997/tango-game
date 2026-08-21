@@ -1,5 +1,5 @@
 .game-board {
-  --gap: clamp(2px, 0.45vw, 4px);
+  --gap: clamp(5px, 1.1vw, 10px);
   display: grid;
   grid-template-columns: repeat(var(--n), minmax(0, 1fr));
   gap: var(--gap);
@@ -75,18 +75,22 @@
 
 .mark {
   position: absolute;
-  z-index: 2;
-  font-size: clamp(11px, 2.2vw, 15px);
-  font-weight: 700;
+  z-index: 3;
+  font-size: clamp(15px, 3.2vw, 22px);
+  font-weight: 800;
   line-height: 1;
-  min-width: 1.1em;
+  min-width: 1.25em;
+  min-height: 1.25em;
+  display: grid;
+  place-items: center;
   text-align: center;
-  color: var(--mark);
-  background: var(--board-bg);
-  border-radius: 4px;
-  padding: 1px 2px;
+  color: var(--ink);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 2px 5px;
   pointer-events: none;
-  box-shadow: 0 0 0 1px var(--border);
+  border: 2px solid var(--ink);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .mark-h {
@@ -101,8 +105,16 @@
   transform: translate(-50%, 50%);
 }
 
+.mark-eq {
+  color: var(--accent-ink);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .mark-neq {
   color: var(--danger);
+  border-color: var(--danger);
+  background: var(--danger-soft);
 }
 
 @media (max-width: 480px) {

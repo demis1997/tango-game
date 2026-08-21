@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
+import { AVATARS, BORDERS, TITLES } from '../data/achievements'
 import { useApp } from '../store/AppContext'
 import './SiteHeader.css'
 
@@ -12,6 +13,13 @@ export function SiteHeader() {
   }
 
   const close = () => setOpen(false)
+
+  const avatar =
+    AVATARS.find((a) => a.id === data.profile.avatarId) ?? AVATARS[0]
+  const border =
+    BORDERS.find((b) => b.id === data.profile.borderId) ?? BORDERS[0]
+  const title =
+    TITLES.find((t) => t.id === data.profile.titleId) ?? TITLES[0]
 
   return (
     <header className="site-header">
@@ -26,11 +34,17 @@ export function SiteHeader() {
         <NavLink to="/" end onClick={close}>
           Daily
         </NavLink>
+        <NavLink to="/campaign" onClick={close}>
+          Campaign
+        </NavLink>
         <NavLink to="/play" onClick={close}>
           Unlimited
         </NavLink>
         <NavLink to="/archive" onClick={close}>
           Archive
+        </NavLink>
+        <NavLink to="/achievements" onClick={close}>
+          Achievements
         </NavLink>
         <NavLink to="/how-to-play" onClick={close}>
           How to Play
@@ -41,6 +55,14 @@ export function SiteHeader() {
       </nav>
 
       <div className="header-actions">
+        <Link
+          to="/profile"
+          className={`profile-chip border-${border.id}`}
+          onClick={close}
+          title={title.label}
+        >
+          <span className="chip-avatar">{avatar.emoji}</span>
+        </Link>
         <button
           type="button"
           className="theme-toggle"

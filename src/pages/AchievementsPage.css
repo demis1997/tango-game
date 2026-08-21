@@ -1,0 +1,90 @@
+.achievements.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1rem 0 2.5rem;
+}
+
+.page-head h1 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+}
+
+.ach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.ach-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.ach-card.off {
+  opacity: 0.45;
+}
+
+.ach-card.on {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+}
+
+.ach-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  font-size: 1.2rem;
+}
+
+.ach-card h2 {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.ach-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.rewards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.rewards span {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ach-card.on .status {
+  color: var(--accent-ink);
+}

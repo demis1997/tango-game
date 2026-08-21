@@ -5,6 +5,7 @@ import { cloneGrid, getViolations, isComplete } from '../engine/rules'
 import type { CellValue, HintResult, Puzzle } from '../engine/types'
 import {
   cloneSessionGrid,
+  countFullBoardMistakes,
   emptySession,
   formatTime,
   type PuzzleSession,
@@ -58,6 +59,7 @@ export function GamePlay({
   const [mistakes, setMistakes] = useState(boot?.mistakes ?? 0)
   const [hint, setHint] = useState<HintResult | null>(null)
   const [hintText, setHintText] = useState<string | null>(null)
+  const [pendingHint, setPendingHint] = useState<HintResult | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
   const reported = useRef(boot?.completed ?? false)
   const onCompleteRef = useRef(onComplete)
@@ -72,6 +74,7 @@ export function GamePlay({
     reported.current = false
     setHint(null)
     setHintText(null)
+    setPendingHint(null)
     setPast([])
     setFuture([])
     setConfirmReset(false)
@@ -180,12 +183,12 @@ export function GamePlay({
     next[r]![c] = nextVal
     setGrid(next)
     setHint(null)
+    setPendingHint(null)
+    setHintText(null)
 
-    let nextMistakes = mistakes
-    if (nextVal !== null && nextVal !== puzzle.solution[r]![c]) {
-      nextMistakes = mistakes + 1
-      setMistakes(nextMistakes)
-    }
+    // Only score mistakes when every cell is filled (cycling Empty→Sun→Moon is free)
+    const nextMistakes = countFullBoardMistakes(next, puzzle.solution)
+    setMistakes(nextMistakes)
     if (!started) setStarted(true)
     persist({
       grid: next,
@@ -204,6 +207,8 @@ export function GamePlay({
     setFuture((f) => [cloneSessionGrid(grid), ...f])
     setGrid(cloneSessionGrid(prev))
     setHint(null)
+    setPendingHint(null)
+    setHintText(null)
     persist({
       grid: prev,
       elapsedMs,
@@ -221,6 +226,8 @@ export function GamePlay({
     setPast((p) => [...p, cloneSessionGrid(grid)])
     setGrid(cloneSessionGrid(nxt))
     setHint(null)
+    setPendingHint(null)
+    setHintText(null)
     persist({
       grid: nxt,
       elapsedMs,
@@ -252,26 +259,40 @@ export function GamePlay({
 
   const onHint = () => {
     if (completed) return
+
+    // Second press: apply the explained cell
+    if (pendingHint) {
+      const h = pendingHint
+      setPast((p) => [...p.slice(-80), cloneSessionGrid(grid)])
+      setFuture([])
+      const next = cloneGrid(grid)
+      next[h.row]![h.col] = h.value
+      setGrid(next)
+      const nextHints = hintsUsed + 1
+      setHintsUsed(nextHints)
+      setPendingHint(null)
+      setHint(h)
+      if (!started) setStarted(true)
+      const nextMistakes = countFullBoardMistakes(next, puzzle.solution)
+      setMistakes(nextMistakes)
+      persist({
+        grid: next,
+        elapsedMs,
+        started: true,
+        completed: false,
+        hintsUsed: nextHints,
+        mistakes: nextMistakes,
+      })
+      return
+    }
+
+    // First press: explain why — do not fill yet
     const h = findHint(grid, puzzle.constraints, puzzle.solution)
     if (!h) return
-    setPast((p) => [...p.slice(-80), cloneSessionGrid(grid)])
-    setFuture([])
-    const next = cloneGrid(grid)
-    next[h.row]![h.col] = h.value
-    setGrid(next)
-    const nextHints = hintsUsed + 1
-    setHintsUsed(nextHints)
+    setPendingHint(h)
     setHint(h)
     setHintText(h.reason)
     if (!started) setStarted(true)
-    persist({
-      grid: next,
-      elapsedMs,
-      started: true,
-      completed: false,
-      hintsUsed: nextHints,
-      mistakes,
-    })
   }
 
   const reset = () => {
@@ -280,6 +301,7 @@ export function GamePlay({
     setFuture([])
     setHint(null)
     setHintText(null)
+    setPendingHint(null)
     setConfirmReset(false)
     const fresh = emptySession(puzzle.seed, puzzle.grid)
     setGrid(fresh.grid)
@@ -357,7 +379,7 @@ export function GamePlay({
           onClick={onHint}
           disabled={completed}
         >
-          Hint
+          {pendingHint ? 'Apply hint' : 'Hint'}
         </button>
         <button
           type="button"
