@@ -51,15 +51,6 @@ export function PlayPage() {
     window.setTimeout(() => setToast(null), 1800)
   }
 
-  const copyResult = async () => {
-    if (!puzzle) return
-    await navigator.clipboard.writeText(
-      `Tango ${puzzle.seed} · ${difficultyLabel(puzzle.difficulty)}`,
-    )
-    setToast('Result copied')
-    window.setTimeout(() => setToast(null), 1800)
-  }
-
   if (!puzzle) {
     return <p className="loading-play">Loading puzzle…</p>
   }
@@ -80,9 +71,6 @@ export function PlayPage() {
             </button>
           ))}
         </div>
-        <button type="button" className="ctrl accent" onClick={() => startNew()}>
-          New Puzzle
-        </button>
       </div>
 
       <GamePlay
@@ -91,11 +79,14 @@ export function PlayPage() {
         eyebrow="Unlimited"
         heading={difficultyLabel(puzzle.difficulty)}
         subheading={`Seed ${puzzle.seed} · ${puzzle.size}×${puzzle.size}`}
+        shareTitle={`Tango Unlimited · ${puzzle.seed}`}
         initialSession={data.unlimitedSessions[puzzle.seed]}
         onSessionChange={(s) => saveUnlimitedSession(puzzle.seed, s)}
         onComplete={({ timeMs }) => {
           completeUnlimited(puzzle.difficulty, timeMs)
         }}
+        showNewPuzzle
+        onNewPuzzle={() => startNew()}
         actions={
           <>
             <button
@@ -106,10 +97,7 @@ export function PlayPage() {
               Next Puzzle
             </button>
             <button type="button" className="link-btn" onClick={share}>
-              Share Puzzle
-            </button>
-            <button type="button" className="link-btn" onClick={copyResult}>
-              Copy Result
+              Copy Challenge Link
             </button>
             <Link className="link-btn" to="/stats">
               View Stats

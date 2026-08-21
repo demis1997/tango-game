@@ -1,23 +1,31 @@
 .game-board {
   --gap: clamp(5px, 1.1vw, 10px);
+  --dur: 140ms;
   display: grid;
   grid-template-columns: repeat(var(--n), minmax(0, 1fr));
   gap: var(--gap);
-  width: min(92vw, 580px);
+  width: min(92vw, 600px);
   aspect-ratio: 1;
-  padding: clamp(8px, 1.4vw, 12px);
-  border-radius: 18px;
+  padding: clamp(8px, 1.4vw, 14px);
+  border-radius: 20px;
   background: var(--board-bg);
   border: 1px solid var(--border);
   box-shadow: var(--board-shadow);
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
+  outline: none;
+}
+
+.game-board:focus-visible {
+  box-shadow: var(--board-shadow), 0 0 0 3px var(--accent-soft);
 }
 
 .game-cell {
   position: relative;
   aspect-ratio: 1;
+  min-width: 44px;
+  min-height: 44px;
   border: 1.5px solid var(--cell-border);
   border-radius: 12px;
   background: var(--cell-bg);
@@ -26,9 +34,10 @@
   place-items: center;
   padding: 0;
   transition:
-    background 0.12s ease,
-    border-color 0.12s ease,
-    transform 0.08s ease;
+    background var(--dur) ease,
+    border-color var(--dur) ease,
+    transform 80ms ease,
+    box-shadow var(--dur) ease;
   color: var(--ink);
 }
 
@@ -38,7 +47,11 @@
 }
 
 .game-cell:not(:disabled):active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+}
+
+.game-cell.is-focused {
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 .game-cell.is-given {
@@ -61,16 +74,59 @@
 
 .game-cell.is-hint {
   box-shadow: inset 0 0 0 2px var(--accent);
+  animation: hint-pulse 1s ease infinite;
 }
 
 .game-cell.is-line-hint {
   background: var(--accent-soft);
 }
 
+@keyframes hint-pulse {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+  50% {
+    box-shadow: inset 0 0 0 2px var(--accent), 0 0 12px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+}
+
 .cell-icon {
   width: 58%;
   height: 58%;
   pointer-events: none;
+  animation: pop var(--dur) ease;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.geo {
+  width: 42%;
+  height: 42%;
+  pointer-events: none;
+  animation: pop var(--dur) ease;
+}
+
+.geo-a {
+  border-radius: 50%;
+  border: 3px solid var(--sun);
+  background: color-mix(in srgb, var(--sun) 25%, transparent);
+}
+
+.geo-b {
+  border-radius: 4px;
+  border: 3px solid var(--moon);
+  background: color-mix(in srgb, var(--moon) 25%, transparent);
+  transform: rotate(45deg);
 }
 
 .mark {
@@ -83,7 +139,6 @@
   min-height: 1.25em;
   display: grid;
   place-items: center;
-  text-align: center;
   color: var(--ink);
   background: var(--surface);
   border-radius: 8px;
@@ -126,5 +181,15 @@
 
   .game-cell {
     border-radius: 8px;
+    min-width: 0;
+    min-height: 0;
   }
+}
+
+html.high-contrast .game-cell {
+  border-width: 2px;
+}
+
+html.high-contrast .mark {
+  border-width: 3px;
 }

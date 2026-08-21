@@ -1,15 +1,14 @@
 import { useApp } from '../store/AppContext'
-import { formatTime } from '../store/appData'
+import { formatTime, listRecentDates } from '../store/appData'
 import { difficultyLabel } from '../engine/seeds'
 import type { Difficulty } from '../engine/types'
+import { Link } from 'react-router-dom'
 import './StatsPage.css'
 
 export function StatsPage() {
   const { data } = useApp()
   const records = Object.values(data.dailyRecords).filter((r) => r.completed)
   const dailyPlayed = records.length
-  const dailyWins = dailyPlayed
-  const winRate = dailyPlayed ? 100 : 0
   const times = records
     .map((r) => r.timeMs)
     .filter((t): t is number => typeof t === 'number')
@@ -17,8 +16,8 @@ export function StatsPage() {
   const avg = times.length
     ? Math.round(times.reduce((a, b) => a + b, 0) / times.length)
     : null
-
   const diffs: Difficulty[] = ['easy', 'medium', 'hard', 'expert']
+  const week = listRecentDates(7)
 
   return (
     <div className="stats page">
@@ -31,7 +30,6 @@ export function StatsPage() {
         <h2>Daily</h2>
         <div className="stat-grid">
           <Stat label="Games played" value={String(dailyPlayed)} />
-          <Stat label="Win rate" value={`${winRate}%`} />
           <Stat label="Current streak" value={String(data.currentStreak)} />
           <Stat label="Longest streak" value={String(data.longestStreak)} />
           <Stat
@@ -42,6 +40,19 @@ export function StatsPage() {
             label="Average time"
             value={avg != null ? formatTime(avg) : '—'}
           />
+          <Stat label="Beat-the-clock best" value={String(data.beatBestScore)} />
+        </div>
+        <h3 className="week-label">Last 7 days</h3>
+        <div className="week-row">
+          {week.map((key) => {
+            const done = data.dailyRecords[key]?.completed
+            const d = new Date(key + 'T12:00:00')
+            return (
+              <div key={key} className={`week-cell ${done ? 'on' : ''}`} title={key}>
+                {d.toLocaleDateString(undefined, { weekday: 'narrow' })}
+              </div>
+            )
+          })}
         </div>
       </section>
 
@@ -57,10 +68,13 @@ export function StatsPage() {
             />
           ))}
         </div>
-        {dailyWins === 0 && data.unlimited.solved === 0 && (
-          <p className="empty">Solve a puzzle to see your stats grow.</p>
-        )}
       </section>
+
+      <p className="empty">
+        <Link to="/beat">Beat the Clock</Link> ·{' '}
+        <Link to="/achievements">Achievements</Link> ·{' '}
+        <Link to="/settings">Settings</Link>
+      </p>
     </div>
   )
 }

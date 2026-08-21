@@ -34,23 +34,23 @@ export function SiteHeader() {
         <NavLink to="/" end onClick={close}>
           Daily
         </NavLink>
-        <NavLink to="/campaign" onClick={close}>
-          Campaign
-        </NavLink>
         <NavLink to="/play" onClick={close}>
           Unlimited
+        </NavLink>
+        <NavLink to="/campaign" onClick={close}>
+          Campaign
         </NavLink>
         <NavLink to="/archive" onClick={close}>
           Archive
         </NavLink>
-        <NavLink to="/achievements" onClick={close}>
-          Achievements
-        </NavLink>
-        <NavLink to="/how-to-play" onClick={close}>
-          How to Play
-        </NavLink>
         <NavLink to="/stats" onClick={close}>
           Stats
+        </NavLink>
+        <NavLink to="/how-to-play" onClick={close}>
+          Help
+        </NavLink>
+        <NavLink to="/settings" onClick={close}>
+          Settings
         </NavLink>
       </nav>
 

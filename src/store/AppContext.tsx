@@ -14,11 +14,13 @@ import {
   loadAppData,
   saveAppData,
   updateProfile,
+  updateSettings,
   type AppData,
   type PlayerProfile,
   type PuzzleSession,
   type ThemeMode,
 } from '../store/appData'
+import type { UserSettings } from '../store/settings'
 import type { Difficulty } from '../engine/types'
 
 interface AppContextValue {
@@ -41,16 +43,14 @@ interface AppContextValue {
     hintsUsed: number,
   ) => string[]
   setProfile: (patch: Partial<PlayerProfile>) => void
+  setSettings: (patch: Partial<UserSettings>) => void
+  setBeatBest: (score: number) => void
 }
 
 const AppCtx = createContext<AppContextValue | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<AppData>(() => loadAppData())
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = data.theme
-  }, [data.theme])
 
   const setTheme = useCallback((theme: ThemeMode) => {
     setData((prev) => {
@@ -59,6 +59,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next
     })
   }, [])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = data.theme
+  }, [data.theme])
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem('tango-v2')) {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          setTheme('dark')
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [setTheme])
 
   const saveDailySession = useCallback((key: string, session: PuzzleSession) => {
     setData((prev) => {
@@ -141,6 +157,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setData((prev) => updateProfile(prev, patch))
   }, [])
 
+  const setSettings = useCallback((patch: Partial<UserSettings>) => {
+    setData((prev) => updateSettings(prev, patch))
+  }, [])
+
+  const setBeatBest = useCallback((score: number) => {
+    setData((prev) => {
+      if (score <= prev.beatBestScore) return prev
+      const next = { ...prev, beatBestScore: score }
+      saveAppData(next)
+      return next
+    })
+  }, [])
+
   const value = useMemo(
     () => ({
       data,
@@ -152,6 +181,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       completeUnlimited,
       completeCampaign,
       setProfile,
+      setSettings,
+      setBeatBest,
     }),
     [
       data,
@@ -163,6 +194,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       completeUnlimited,
       completeCampaign,
       setProfile,
+      setSettings,
+      setBeatBest,
     ],
   )
 

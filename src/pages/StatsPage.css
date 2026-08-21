@@ -56,3 +56,34 @@
   color: var(--muted);
   margin-top: 0.75rem;
 }
+
+.week-label {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.week-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.week-cell {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.week-cell.on {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: transparent;
+  font-weight: 700;
+}

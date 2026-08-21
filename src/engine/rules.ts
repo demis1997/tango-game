@@ -150,6 +150,38 @@ export function getViolations(
     }
   }
 
+  // Duplicate completed rows / columns
+  const rowKeys = new Map<string, number[]>()
+  for (let r = 0; r < size; r++) {
+    const row = getRow(grid, r)
+    if (row.some((c) => c === null)) continue
+    const key = row.join(',')
+    const list = rowKeys.get(key) ?? []
+    list.push(r)
+    rowKeys.set(key, list)
+  }
+  for (const rows of rowKeys.values()) {
+    if (rows.length < 2) continue
+    for (const r of rows) {
+      for (let c = 0; c < size; c++) mark(r, c)
+    }
+  }
+  const colKeys = new Map<string, number[]>()
+  for (let c = 0; c < size; c++) {
+    const col = getCol(grid, c)
+    if (col.some((v) => v === null)) continue
+    const key = col.join(',')
+    const list = colKeys.get(key) ?? []
+    list.push(c)
+    colKeys.set(key, list)
+  }
+  for (const cols of colKeys.values()) {
+    if (cols.length < 2) continue
+    for (const c of cols) {
+      for (let r = 0; r < size; r++) mark(r, c)
+    }
+  }
+
   return [...bad].map((k) => {
     const [r, c] = k.split(',').map(Number)
     return { row: r!, col: c! }

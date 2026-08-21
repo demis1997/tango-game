@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { GameBoard } from './GameBoard'
 import { findHint } from '../engine/hints'
 import { cloneGrid, getViolations, isComplete } from '../engine/rules'
+import { explainViolations } from '../engine/validator'
 import type { CellValue, HintResult, Puzzle } from '../engine/types'
+import {
+  buildShareText,
+  shareOrCopy,
+} from '../lib/share'
 import {
   cloneSessionGrid,
   countFullBoardMistakes,
@@ -10,6 +15,7 @@ import {
   formatTime,
   type PuzzleSession,
 } from '../store/appData'
+import { useApp } from '../store/AppContext'
 import './GamePlay.css'
 
 export interface GamePlayProps {
@@ -18,14 +24,18 @@ export interface GamePlayProps {
   heading: string
   subheading: string
   streak?: number
+  shareTitle?: string
   initialSession?: PuzzleSession | null
   onSessionChange?: (session: PuzzleSession) => void
   onComplete?: (payload: {
     timeMs: number
     hintsUsed: number
     mistakes: number
+    undos: number
   }) => void
   actions?: React.ReactNode
+  showNewPuzzle?: boolean
+  onNewPuzzle?: () => void
 }
 
 export function GamePlay({
@@ -34,11 +44,16 @@ export function GamePlay({
   heading,
   subheading,
   streak,
+  shareTitle,
   initialSession,
   onSessionChange,
   onComplete,
   actions,
+  showNewPuzzle,
+  onNewPuzzle,
 }: GamePlayProps) {
+  const { data } = useApp()
+  const settings = data.settings
   const givens = useMemo(
     () => puzzle.grid.map((row) => row.map((c) => c !== null)),
     [puzzle],
@@ -57,18 +72,38 @@ export function GamePlay({
   const [completed, setCompleted] = useState(boot?.completed ?? false)
   const [hintsUsed, setHintsUsed] = useState(boot?.hintsUsed ?? 0)
   const [mistakes, setMistakes] = useState(boot?.mistakes ?? 0)
+  const [undos, setUndos] = useState(0)
   const [hint, setHint] = useState<HintResult | null>(null)
   const [hintText, setHintText] = useState<string | null>(null)
   const [pendingHint, setPendingHint] = useState<HintResult | null>(null)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [confirmNew, setConfirmNew] = useState(false)
+  const [checkMsg, setCheckMsg] = useState<string | null>(null)
+  const [checkedViolations, setCheckedViolations] = useState<
+    { row: number; col: number }[]
+  >([])
+  const [toast, setToast] = useState<string | null>(null)
+  const [focus, setFocus] = useState<{ row: number; col: number } | null>(null)
   const reported = useRef(boot?.completed ?? false)
   const onCompleteRef = useRef(onComplete)
   const onSessionRef = useRef(onSessionChange)
+  const elapsedRef = useRef(elapsedMs)
+
+  useEffect(() => {
+    elapsedRef.current = elapsedMs
+  }, [elapsedMs])
 
   useEffect(() => {
     onCompleteRef.current = onComplete
     onSessionRef.current = onSessionChange
   }, [onComplete, onSessionChange])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      'high-contrast',
+      settings.highContrast,
+    )
+  }, [settings.highContrast])
 
   useEffect(() => {
     reported.current = false
@@ -78,6 +113,10 @@ export function GamePlay({
     setPast([])
     setFuture([])
     setConfirmReset(false)
+    setConfirmNew(false)
+    setCheckMsg(null)
+    setCheckedViolations([])
+    setUndos(0)
     if (initialSession && initialSession.seed === puzzle.seed) {
       setGrid(cloneSessionGrid(initialSession.grid))
       setElapsedMs(initialSession.elapsedMs)
@@ -116,30 +155,40 @@ export function GamePlay({
     [puzzle.seed],
   )
 
+  // Timer — pauses when tab hidden
   useEffect(() => {
     if (!started || completed) return
-    const base = Date.now() - elapsedMs
-    const id = window.setInterval(() => {
+    let base = Date.now() - elapsedRef.current
+    const tick = () => {
+      if (document.hidden) return
       const next = Date.now() - base
       setElapsedMs(next)
-    }, 250)
-    return () => clearInterval(id)
-  }, [started, completed]) // eslint-disable-line react-hooks/exhaustive-deps
+    }
+    const onVis = () => {
+      if (document.hidden) {
+        elapsedRef.current = Date.now() - base
+      } else {
+        base = Date.now() - elapsedRef.current
+      }
+    }
+    const id = window.setInterval(tick, 250)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      clearInterval(id)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [started, completed])
 
-  // Persist timer periodically
   useEffect(() => {
     if (!started || completed) return
     const id = window.setInterval(() => {
-      setElapsedMs((ms) => {
-        persist({
-          grid,
-          elapsedMs: ms,
-          started: true,
-          completed: false,
-          hintsUsed,
-          mistakes,
-        })
-        return ms
+      persist({
+        grid,
+        elapsedMs: elapsedRef.current,
+        started: true,
+        completed: false,
+        hintsUsed,
+        mistakes,
       })
     }, 2000)
     return () => clearInterval(id)
@@ -151,16 +200,46 @@ export function GamePlay({
     reported.current = true
     setCompleted(true)
     setStarted(true)
+    const timeMs = elapsedRef.current
     persist({
       grid,
-      elapsedMs,
+      elapsedMs: timeMs,
       started: true,
       completed: true,
       hintsUsed,
       mistakes,
     })
-    onCompleteRef.current?.({ timeMs: elapsedMs, hintsUsed, mistakes })
-  }, [grid, puzzle.constraints, completed, elapsedMs, hintsUsed, mistakes, persist])
+    onCompleteRef.current?.({
+      timeMs,
+      hintsUsed,
+      mistakes,
+      undos,
+    })
+  }, [grid, puzzle.constraints, completed, hintsUsed, mistakes, undos, persist])
+
+  const applyGrid = (
+    next: CellValue[][],
+    opts?: { countUndo?: boolean },
+  ) => {
+    setGrid(next)
+    setHint(null)
+    setPendingHint(null)
+    setHintText(null)
+    setCheckedViolations([])
+    setCheckMsg(null)
+    const nextMistakes = countFullBoardMistakes(next, puzzle.solution)
+    setMistakes(nextMistakes)
+    if (!started) setStarted(true)
+    if (opts?.countUndo) setUndos((u) => u + 1)
+    persist({
+      grid: next,
+      elapsedMs: elapsedRef.current,
+      started: true,
+      completed: false,
+      hintsUsed,
+      mistakes: nextMistakes,
+    })
+  }
 
   const cycleCell = (r: number, c: number, reverse: boolean) => {
     if (completed || givens[r]![c]) return
@@ -176,28 +255,21 @@ export function GamePlay({
         : cur === 1
           ? 0
           : null
-
     setPast((p) => [...p.slice(-80), cloneSessionGrid(grid)])
     setFuture([])
     const next = cloneGrid(grid)
     next[r]![c] = nextVal
-    setGrid(next)
-    setHint(null)
-    setPendingHint(null)
-    setHintText(null)
+    applyGrid(next)
+  }
 
-    // Only score mistakes when every cell is filled (cycling Empty→Sun→Moon is free)
-    const nextMistakes = countFullBoardMistakes(next, puzzle.solution)
-    setMistakes(nextMistakes)
-    if (!started) setStarted(true)
-    persist({
-      grid: next,
-      elapsedMs,
-      started: true,
-      completed: false,
-      hintsUsed,
-      mistakes: nextMistakes,
-    })
+  const setValue = (r: number, c: number, value: CellValue) => {
+    if (completed || givens[r]![c]) return
+    if (grid[r]![c] === value) return
+    setPast((p) => [...p.slice(-80), cloneSessionGrid(grid)])
+    setFuture([])
+    const next = cloneGrid(grid)
+    next[r]![c] = value
+    applyGrid(next)
   }
 
   const doUndo = () => {
@@ -205,18 +277,7 @@ export function GamePlay({
     const prev = past[past.length - 1]!
     setPast((p) => p.slice(0, -1))
     setFuture((f) => [cloneSessionGrid(grid), ...f])
-    setGrid(cloneSessionGrid(prev))
-    setHint(null)
-    setPendingHint(null)
-    setHintText(null)
-    persist({
-      grid: prev,
-      elapsedMs,
-      started,
-      completed: false,
-      hintsUsed,
-      mistakes,
-    })
+    applyGrid(cloneSessionGrid(prev), { countUndo: true })
   }
 
   const doRedo = () => {
@@ -224,18 +285,7 @@ export function GamePlay({
     const nxt = future[0]!
     setFuture((f) => f.slice(1))
     setPast((p) => [...p, cloneSessionGrid(grid)])
-    setGrid(cloneSessionGrid(nxt))
-    setHint(null)
-    setPendingHint(null)
-    setHintText(null)
-    persist({
-      grid: nxt,
-      elapsedMs,
-      started,
-      completed: false,
-      hintsUsed,
-      mistakes,
-    })
+    applyGrid(cloneSessionGrid(nxt))
   }
 
   useEffect(() => {
@@ -259,40 +309,55 @@ export function GamePlay({
 
   const onHint = () => {
     if (completed) return
-
-    // Second press: apply the explained cell
     if (pendingHint) {
       const h = pendingHint
       setPast((p) => [...p.slice(-80), cloneSessionGrid(grid)])
       setFuture([])
       const next = cloneGrid(grid)
       next[h.row]![h.col] = h.value
-      setGrid(next)
       const nextHints = hintsUsed + 1
       setHintsUsed(nextHints)
       setPendingHint(null)
       setHint(h)
-      if (!started) setStarted(true)
-      const nextMistakes = countFullBoardMistakes(next, puzzle.solution)
-      setMistakes(nextMistakes)
+      applyGrid(next)
       persist({
         grid: next,
-        elapsedMs,
+        elapsedMs: elapsedRef.current,
         started: true,
         completed: false,
         hintsUsed: nextHints,
-        mistakes: nextMistakes,
+        mistakes: countFullBoardMistakes(next, puzzle.solution),
       })
       return
     }
-
-    // First press: explain why — do not fill yet
     const h = findHint(grid, puzzle.constraints, puzzle.solution)
-    if (!h) return
+    if (!h) {
+      setCheckMsg('No forced move found right now — keep looking.')
+      return
+    }
     setPendingHint(h)
     setHint(h)
     setHintText(h.reason)
     if (!started) setStarted(true)
+  }
+
+  const onCheck = () => {
+    const explained = explainViolations(grid, puzzle.constraints)
+    if (explained.length === 0) {
+      const empty = grid.some((row) => row.some((c) => c === null))
+      setCheckedViolations([])
+      setCheckMsg(
+        empty
+          ? 'No definite errors yet — keep going.'
+          : isComplete(grid, puzzle.constraints)
+            ? 'Looks complete!'
+            : 'Board is full but something is still off.',
+      )
+      return
+    }
+    const cells = explained.flatMap((e) => e.cells)
+    setCheckedViolations(cells)
+    setCheckMsg(explained[0]!.message)
   }
 
   const reset = () => {
@@ -303,6 +368,9 @@ export function GamePlay({
     setHintText(null)
     setPendingHint(null)
     setConfirmReset(false)
+    setCheckMsg(null)
+    setCheckedViolations([])
+    setUndos(0)
     const fresh = emptySession(puzzle.seed, puzzle.grid)
     setGrid(fresh.grid)
     setElapsedMs(0)
@@ -321,10 +389,26 @@ export function GamePlay({
     else reset()
   }
 
-  const violations = useMemo(
-    () => getViolations(grid, puzzle.constraints),
-    [grid, puzzle.constraints],
-  )
+  const liveViolations = useMemo(() => {
+    if (settings.validationMode === 'live') {
+      return getViolations(grid, puzzle.constraints)
+    }
+    return checkedViolations
+  }, [settings.validationMode, grid, puzzle.constraints, checkedViolations])
+
+  const onShare = async () => {
+    const text = buildShareText({
+      title: shareTitle ?? `${eyebrow} — ${heading}`,
+      timeMs: elapsedMs,
+      hintsUsed,
+      mistakes,
+      streak,
+      seed: puzzle.seed,
+    })
+    const mode = await shareOrCopy(text)
+    setToast(mode === 'shared' ? 'Shared' : 'Result copied')
+    window.setTimeout(() => setToast(null), 1600)
+  }
 
   return (
     <div className="game-play">
@@ -349,53 +433,90 @@ export function GamePlay({
           grid={grid}
           constraints={puzzle.constraints}
           givens={givens}
-          violations={violations}
+          violations={liveViolations}
           hint={hint}
           disabled={completed}
+          symbolStyle={settings.symbolStyle}
+          focusCell={focus}
+          onFocusCell={(r, c) => setFocus({ row: r, col: c })}
           onCycle={cycleCell}
+          onSetValue={setValue}
         />
       </div>
 
-      <div className="controls">
+      <div className="controls" role="toolbar" aria-label="Game controls">
         <button
           type="button"
           className="ctrl"
           onClick={doUndo}
           disabled={!past.length || completed}
+          title="Undo (Ctrl/Cmd+Z)"
         >
-          Undo
+          ↩ Undo
         </button>
         <button
           type="button"
           className="ctrl"
           onClick={doRedo}
           disabled={!future.length || completed}
+          title="Redo (Ctrl/Cmd+Shift+Z)"
         >
-          Redo
+          ↪ Redo
         </button>
         <button
           type="button"
           className="ctrl accent"
           onClick={onHint}
           disabled={completed}
+          title="Get a logical hint"
         >
-          {pendingHint ? 'Apply hint' : 'Hint'}
+          {pendingHint ? '✓ Apply hint' : '💡 Hint'}
+        </button>
+        <button
+          type="button"
+          className="ctrl"
+          onClick={onCheck}
+          disabled={completed}
+          title="Check for definite rule errors"
+        >
+          ✓ Check
         </button>
         <button
           type="button"
           className="ctrl"
           onClick={requestReset}
           disabled={completed}
+          title="Restart this puzzle"
         >
-          Reset
+          ↻ Restart
         </button>
+        {showNewPuzzle && onNewPuzzle && (
+          <button
+            type="button"
+            className="ctrl"
+            onClick={() => {
+              const hasProgress = grid.some((row, r) =>
+                row.some((cell, c) => !givens[r]![c] && cell !== null),
+              )
+              if (hasProgress && !completed) setConfirmNew(true)
+              else onNewPuzzle()
+            }}
+            title="Generate a new puzzle"
+          >
+            ✦ New
+          </button>
+        )}
       </div>
 
       <p className="gesture-hint">
-        Tap to cycle · Right-click or long-press to reverse
+        Tap to cycle · Right-click / long-press reverse · Arrows + S / M / Delete
       </p>
 
-      {hintText && <p className="hint-copy">{hintText}</p>}
+      {(hintText || checkMsg) && (
+        <p className="hint-copy" role="status">
+          {hintText ?? checkMsg}
+        </p>
+      )}
 
       {!completed && actions && <div className="inline-actions">{actions}</div>}
 
@@ -410,12 +531,18 @@ export function GamePlay({
             )}
             <p className="complete-meta">
               {mistakes} mistake{mistakes === 1 ? '' : 's'} · {hintsUsed} hint
-              {hintsUsed === 1 ? '' : 's'}
+              {hintsUsed === 1 ? '' : 's'} · {undos} undo
+              {undos === 1 ? '' : 's'}
             </p>
             {streak != null && streak > 0 && (
               <p className="complete-streak">🔥 {streak} day streak</p>
             )}
-            {actions && <div className="complete-actions">{actions}</div>}
+            <div className="complete-actions">
+              <button type="button" className="link-btn primary" onClick={onShare}>
+                Share Results
+              </button>
+              {actions}
+            </div>
           </div>
         </div>
       )}
@@ -423,13 +550,11 @@ export function GamePlay({
       {confirmReset && (
         <div className="complete-overlay" role="dialog">
           <div className="complete-card">
-            <h2>Reset puzzle?</h2>
-            <p className="complete-meta">
-              Your progress on this board will be cleared.
-            </p>
+            <h2>Restart puzzle?</h2>
+            <p className="complete-meta">Your progress on this board will be cleared.</p>
             <div className="complete-actions">
               <button type="button" className="ctrl accent" onClick={reset}>
-                Reset
+                Restart
               </button>
               <button
                 type="button"
@@ -442,6 +567,36 @@ export function GamePlay({
           </div>
         </div>
       )}
+
+      {confirmNew && onNewPuzzle && (
+        <div className="complete-overlay" role="dialog">
+          <div className="complete-card">
+            <h2>New puzzle?</h2>
+            <p className="complete-meta">Leave this board and generate another?</p>
+            <div className="complete-actions">
+              <button
+                type="button"
+                className="ctrl accent"
+                onClick={() => {
+                  setConfirmNew(false)
+                  onNewPuzzle()
+                }}
+              >
+                New puzzle
+              </button>
+              <button
+                type="button"
+                className="ctrl"
+                onClick={() => setConfirmNew(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <div className="play-toast">{toast}</div>}
     </div>
   )
 }

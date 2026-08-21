@@ -1,12 +1,14 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { GamePlay } from '../components/GamePlay'
+import { TutorialOverlay } from '../components/Tutorial'
 import { getDailyPuzzle } from '../engine/factory'
 import {
   dateKey,
   difficultyLabel,
   formatDisplayDate,
 } from '../engine/seeds'
+import { dailyShareTitle } from '../lib/share'
 import { useApp } from '../store/AppContext'
 import { formatTime, listRecentDates } from '../store/appData'
 import './HomePage.css'
@@ -17,21 +19,18 @@ export function HomePage() {
   const puzzle = useMemo(() => getDailyPuzzle(today), [today])
   const recent = listRecentDates(7)
 
-  const copyLink = async () => {
-    const url = `${window.location.origin}/`
-    await navigator.clipboard.writeText(url)
-  }
-
   return (
     <div className="home">
+      <TutorialOverlay />
       <section className="play-stage">
         <GamePlay
           key={puzzle.seed}
           puzzle={puzzle}
           eyebrow="Daily"
           heading={formatDisplayDate(today)}
-          subheading={`Difficulty: ${difficultyLabel(puzzle.difficulty)}`}
+          subheading={`Difficulty: ${difficultyLabel(puzzle.difficulty)} · ${puzzle.size}×${puzzle.size}`}
           streak={data.currentStreak}
+          shareTitle={dailyShareTitle(today)}
           initialSession={data.daily[today]}
           onSessionChange={(s) => saveDailySession(today, s)}
           onComplete={({ timeMs, hintsUsed, mistakes }) => {
@@ -44,9 +43,6 @@ export function HomePage() {
               <Link className="link-btn primary" to="/play">
                 Play Unlimited
               </Link>
-              <button type="button" className="link-btn" onClick={copyLink}>
-                Share
-              </button>
               <Link className="link-btn" to="/stats">
                 View Stats
               </Link>
@@ -130,8 +126,8 @@ export function HomePage() {
           <details>
             <summary>Can I share a puzzle?</summary>
             <p>
-              Yes. Unlimited boards use URLs like <code>/play/6M7K3Q2</code> so
-              friends solve the same grid.
+              Yes. Unlimited boards use URLs like <code>/play/6M7K3Q2</code>.
+              After finishing, use Share Results for a spoiler-safe scorecard.
             </p>
           </details>
           <details>
@@ -148,7 +144,8 @@ export function HomePage() {
         <p>Tango — sun & moon logic puzzles.</p>
         <p>
           <Link to="/how-to-play">How to Play</Link> ·{' '}
-          <Link to="/archive">Archive</Link> · <Link to="/stats">Stats</Link>
+          <Link to="/archive">Archive</Link> · <Link to="/stats">Stats</Link> ·{' '}
+          <Link to="/settings">Settings</Link>
         </p>
       </footer>
     </div>

@@ -2,6 +2,7 @@ import type { CellValue, Difficulty } from '../engine/types'
 import { dateKey } from '../engine/seeds'
 import { ACHIEVEMENTS } from '../data/achievements'
 import { CAMPAIGN_LEVELS } from '../engine/campaign'
+import { DEFAULT_SETTINGS, type UserSettings } from './settings'
 
 const ROOT = 'tango-v2'
 
@@ -67,6 +68,8 @@ export interface AppData {
   unlockedBorders: string[]
   unlockedTitles: string[]
   profile: PlayerProfile
+  settings: import('./settings').UserSettings
+  beatBestScore: number
 }
 
 function defaultUnlimited(): UnlimitedStats {
@@ -102,6 +105,8 @@ export function defaultAppData(): AppData {
       borderId: 'plain',
       titleId: 'wanderer',
     },
+    settings: { ...DEFAULT_SETTINGS },
+    beatBestScore: 0,
   }
 }
 
@@ -127,6 +132,8 @@ export function loadAppData(): AppData {
       profile: { ...base.profile, ...parsed.profile },
       campaignUnlocked: parsed.campaignUnlocked ?? 1,
       campaignNoHintClears: parsed.campaignNoHintClears ?? 0,
+      settings: { ...DEFAULT_SETTINGS, ...parsed.settings },
+      beatBestScore: parsed.beatBestScore ?? 0,
     }
   } catch {
     return defaultAppData()
@@ -288,6 +295,18 @@ export function updateProfile(
   const next = {
     ...data,
     profile: { ...data.profile, ...patch },
+  }
+  saveAppData(next)
+  return next
+}
+
+export function updateSettings(
+  data: AppData,
+  patch: Partial<UserSettings>,
+): AppData {
+  const next = {
+    ...data,
+    settings: { ...data.settings, ...patch },
   }
   saveAppData(next)
   return next
