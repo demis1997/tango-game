@@ -1,60 +1,156 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import type { GameState } from '../store/progress'
+import { GamePlay } from '../components/GamePlay'
+import { getDailyPuzzle } from '../engine/factory'
+import {
+  dateKey,
+  difficultyLabel,
+  formatDisplayDate,
+} from '../engine/seeds'
+import { useApp } from '../store/AppContext'
+import { formatTime, listRecentDates } from '../store/appData'
 import './HomePage.css'
 
-interface HomePageProps {
-  state: GameState
-}
+export function HomePage() {
+  const { data, saveDailySession, completeDaily } = useApp()
+  const today = dateKey()
+  const puzzle = useMemo(() => getDailyPuzzle(today), [today])
+  const recent = listRecentDates(7)
 
-export function HomePage({ state }: HomePageProps) {
-  const next = state.highestUnlocked
+  const copyLink = async () => {
+    const url = `${window.location.origin}/`
+    await navigator.clipboard.writeText(url)
+  }
 
   return (
     <div className="home">
-      <section className="hero">
-        <div className="hero-sky" aria-hidden>
-          <span className="orb sun-orb" />
-          <span className="orb moon-orb" />
-          <span className="star s1" />
-          <span className="star s2" />
-          <span className="star s3" />
-        </div>
-        <div className="hero-copy">
-          <p className="hero-brand">∞ Tango</p>
-          <h1>Fill the grid with suns and moons.</h1>
-          <p className="hero-sub">
-            1000 levels from easy to very hard. Beat the clock, unlock banners,
-            and dance with logic.
-          </p>
-          <div className="hero-ctas">
-            <Link className="btn accent" to={`/play/${next}`}>
-              Continue level {next}
-            </Link>
-            <Link className="btn ghost" to="/how-to-play">
-              How to play
-            </Link>
+      <section className="play-stage">
+        <GamePlay
+          key={puzzle.seed}
+          puzzle={puzzle}
+          eyebrow="Daily"
+          heading={formatDisplayDate(today)}
+          subheading={`Difficulty: ${difficultyLabel(puzzle.difficulty)}`}
+          streak={data.currentStreak}
+          initialSession={data.daily[today]}
+          onSessionChange={(s) => saveDailySession(today, s)}
+          onComplete={({ timeMs, hintsUsed, mistakes }) => {
+            if (!data.dailyRecords[today]?.completed) {
+              completeDaily(today, puzzle.seed, timeMs, hintsUsed, mistakes)
+            }
+          }}
+          actions={
+            <>
+              <Link className="link-btn primary" to="/play">
+                Play Unlimited
+              </Link>
+              <button type="button" className="link-btn" onClick={copyLink}>
+                Share
+              </button>
+              <Link className="link-btn" to="/stats">
+                View Stats
+              </Link>
+            </>
+          }
+        />
+      </section>
+
+      <section className="below">
+        <div className="recent">
+          <div className="section-head">
+            <h2>Recent Daily Puzzles</h2>
+            <Link to="/archive">View all →</Link>
           </div>
+          <div className="recent-row">
+            {recent.map((key) => {
+              const rec = data.dailyRecords[key]
+              const d = new Date(key + 'T12:00:00')
+              const label = d.toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+              })
+              return (
+                <Link
+                  key={key}
+                  to={key === today ? '/' : `/archive/${key}`}
+                  className={`recent-pill ${rec?.completed ? 'done' : ''} ${key === today ? 'today' : ''}`}
+                >
+                  <span>{label}</span>
+                  <span className="recent-meta">
+                    {key === today
+                      ? 'Today'
+                      : rec?.completed
+                        ? `✓ ${formatTime(rec.timeMs ?? 0)}`
+                        : '—'}
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="content-block">
+          <h2>How to Play</h2>
+          <ul className="rule-list">
+            <li>Fill every cell with a Sun or a Moon.</li>
+            <li>Each row and column has an equal number of each.</li>
+            <li>Never place three identical symbols in a row.</li>
+            <li>
+              <strong>=</strong> means same · <strong>×</strong> means different.
+            </li>
+            <li>Every board can be solved by logic alone.</li>
+          </ul>
+          <Link to="/how-to-play" className="text-link">
+            Full guide & strategy →
+          </Link>
+        </div>
+
+        <div className="content-block">
+          <h2>Why play Tango?</h2>
+          <p>
+            Tango is a fast binary logic puzzle — counting, patterns, and
+            constraint chains. Play the shared daily board or unlimited practice
+            puzzles with shareable seeds.
+          </p>
+        </div>
+
+        <div className="content-block faq">
+          <h2>FAQ</h2>
+          <details>
+            <summary>Is this free?</summary>
+            <p>Yes. Play in your browser with no account required.</p>
+          </details>
+          <details>
+            <summary>Daily vs Unlimited?</summary>
+            <p>
+              Daily is one shared puzzle each calendar day. Unlimited generates
+              endless boards you can share via a seed link.
+            </p>
+          </details>
+          <details>
+            <summary>Can I share a puzzle?</summary>
+            <p>
+              Yes. Unlimited boards use URLs like <code>/play/6M7K3Q2</code> so
+              friends solve the same grid.
+            </p>
+          </details>
+          <details>
+            <summary>Is this LinkedIn?</summary>
+            <p>
+              No. This is an independent practice site and is not affiliated
+              with LinkedIn.
+            </p>
+          </details>
         </div>
       </section>
 
-      <section className="home-features">
-        <Link to="/levels" className="feature">
-          <h2>Journey</h2>
-          <p>1000 curated-difficulty boards. Clear one, unlock the next.</p>
-        </Link>
-        <Link to="/random" className="feature">
-          <h2>Randomizer</h2>
-          <p>Endless puzzles at any size and difficulty you choose.</p>
-        </Link>
-        <Link to="/achievements" className="feature">
-          <h2>Achievements</h2>
-          <p>Speed banners, titles, and borders for blistering clears.</p>
-        </Link>
-        <Link to="/profile" className="feature">
-          <h2>Profile</h2>
-          <p>Custom icons and borders that show off what you’ve earned.</p>
-        </Link>
-      </section>
+      <footer className="site-footer">
+        <p>Tango — sun & moon logic puzzles.</p>
+        <p>
+          <Link to="/how-to-play">How to Play</Link> ·{' '}
+          <Link to="/archive">Archive</Link> · <Link to="/stats">Stats</Link>
+        </p>
+      </footer>
     </div>
   )
 }

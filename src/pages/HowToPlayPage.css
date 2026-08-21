@@ -1,0 +1,114 @@
+.how.page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1rem 0 2.5rem;
+}
+
+.page-head h1 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+}
+
+.how section {
+  margin-top: 1.75rem;
+}
+
+.how h2 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+.steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--ink-soft);
+  line-height: 1.55;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mini-row {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+}
+
+.chip {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+}
+
+.chip svg {
+  width: 20px;
+  height: 20px;
+}
+
+.chip.sun {
+  color: var(--sun);
+}
+
+.chip.moon {
+  color: var(--moon);
+}
+
+.strat {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.strat article {
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.strat h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.strat p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.diagram {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.4rem 0 !important;
+  color: var(--ink);
+}
+
+.diagram svg {
+  width: 22px;
+  height: 22px;
+}
+
+.diagram .dot {
+  opacity: 0.45;
+  font-size: 1.2rem;
+}
+
+.cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}

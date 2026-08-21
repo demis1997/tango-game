@@ -1,0 +1,75 @@
+.archive.page,
+.archive-play {
+  padding: 1rem 0 2.5rem;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.page-head h1 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+}
+
+.month {
+  margin: 1.5rem 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.archive-row {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+}
+
+.archive-row.done {
+  background: var(--success-soft);
+}
+
+.day {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.back {
+  font: inherit;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+.back:hover {
+  color: var(--ink);
+}

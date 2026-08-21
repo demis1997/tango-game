@@ -1,5 +1,5 @@
 .app-shell {
-  min-height: 100vh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
 }
@@ -8,144 +8,11 @@
   flex: 1;
   width: min(1100px, 100%);
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 3rem;
+  padding: 0 1rem 1rem;
 }
 
-.page {
-  animation: page-in 0.35s ease;
-}
-
-.page.narrow {
-  width: min(640px, 100%);
-  margin: 0 auto;
-}
-
-.page-head {
-  margin-bottom: 1.5rem;
-}
-
-.page-head h1 {
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: clamp(1.6rem, 3vw, 2.1rem);
-  color: #f5e6c8;
-  margin: 0 0 0.4rem;
-}
-
-.lede {
-  color: #9aa3b8;
-  margin: 0;
-  max-width: 40rem;
-  line-height: 1.55;
-}
-
-.how-to section {
-  margin-bottom: 1.5rem;
-}
-
-.how-to h2 {
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: 1.15rem;
-  color: #f5e6c8;
-  margin: 0 0 0.4rem;
-}
-
-.how-to p,
-.how-to li {
-  color: #a8b0c4;
-  line-height: 1.55;
-}
-
-.how-to ul,
-.how-to ol {
-  padding-left: 1.2rem;
-}
-
-.example {
-  font-family: 'Outfit', monospace;
-  letter-spacing: 0.12em;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  background: #161e2e;
-  display: inline-block;
-}
-
-.example.ok {
-  color: #6ec6b0;
-}
-
-.example.bad {
-  color: #e85a6e;
-}
-
-.random-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: flex-end;
-  margin-bottom: 1.25rem;
-  justify-content: center;
-}
-
-.random-controls label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.75rem;
-  color: #8a93a8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.random-controls select {
-  background: #1a2234;
-  color: #e8ecf4;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 0.5rem 0.7rem;
-  min-width: 120px;
-}
-
-.toast {
-  position: fixed;
-  bottom: 1.25rem;
-  right: 1.25rem;
-  z-index: 60;
-  background: #1c2538;
-  border: 1px solid rgba(240, 193, 75, 0.35);
-  border-radius: 14px;
-  padding: 1rem 1.15rem;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-  max-width: 280px;
-  animation: page-in 0.3s ease;
-}
-
-.toast strong {
-  color: #f0c14b;
-  display: block;
-  margin-bottom: 0.4rem;
-  font-size: 0.85rem;
-}
-
-.toast ul {
-  margin: 0 0 0.75rem;
-  padding-left: 1.1rem;
-  color: #d8dde8;
-  font-size: 0.9rem;
-}
-
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .app-main {
-    padding: 1rem 0.75rem 2.5rem;
+    padding: 0 0.75rem 1rem;
   }
 }

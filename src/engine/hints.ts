@@ -3,7 +3,7 @@ import type { CellValue, Constraint, HintResult } from './types'
 
 const LABEL = { 0: 'Sun', 1: 'Moon' } as const
 
-/** Find a logically forced cell using common deduction rules */
+/** Find a logically forced cell with highlight metadata */
 export function findHint(
   grid: CellValue[][],
   constraints: Constraint[],
@@ -12,37 +12,41 @@ export function findHint(
   const size = grid.length
   const half = size / 2
 
-  // 1. Constraint forcing
   for (const cons of constraints) {
     const a = grid[cons.r1]![cons.c1]
     const b = grid[cons.r2]![cons.c2]
     if (a !== null && b === null) {
-      const value: 0 | 1 =
-        cons.type === 'eq' ? a : ((1 - a) as 0 | 1)
+      const value: 0 | 1 = cons.type === 'eq' ? a : ((1 - a) as 0 | 1)
       if (canPlace(grid, cons.r2, cons.c2, value, constraints)) {
         return {
           row: cons.r2,
           col: cons.c2,
           value,
-          reason: `Constraint ${cons.type === 'eq' ? '=' : '×'} forces a ${LABEL[value]} here.`,
+          reason:
+            cons.type === 'eq'
+              ? `These cells are linked by =, so they must both be ${LABEL[value]}s.`
+              : `These cells are linked by ×, so this cell must be a ${LABEL[value]}.`,
+          highlight: { type: 'constraint', constraint: cons },
         }
       }
     }
     if (b !== null && a === null) {
-      const value: 0 | 1 =
-        cons.type === 'eq' ? b : ((1 - b) as 0 | 1)
+      const value: 0 | 1 = cons.type === 'eq' ? b : ((1 - b) as 0 | 1)
       if (canPlace(grid, cons.r1, cons.c1, value, constraints)) {
         return {
           row: cons.r1,
           col: cons.c1,
           value,
-          reason: `Constraint ${cons.type === 'eq' ? '=' : '×'} forces a ${LABEL[value]} here.`,
+          reason:
+            cons.type === 'eq'
+              ? `These cells are linked by =, so they must both be ${LABEL[value]}s.`
+              : `These cells are linked by ×, so this cell must be a ${LABEL[value]}.`,
+          highlight: { type: 'constraint', constraint: cons },
         }
       }
     }
   }
 
-  // 2. Balance completion
   for (let r = 0; r < size; r++) {
     for (const v of [0, 1] as const) {
       let count = 0
@@ -59,12 +63,14 @@ export function findHint(
             row: r,
             col: c,
             value: other,
-            reason: `This row already has ${half} ${LABEL[v]}s — remaining cells must be ${LABEL[other]}s.`,
+            reason: `Row ${r + 1} already has ${half} ${LABEL[v]}s, so the remaining cells must be ${LABEL[other]}s.`,
+            highlight: { type: 'row', row: r },
           }
         }
       }
     }
   }
+
   for (let c = 0; c < size; c++) {
     for (const v of [0, 1] as const) {
       let count = 0
@@ -81,14 +87,14 @@ export function findHint(
             row: r,
             col: c,
             value: other,
-            reason: `This column already has ${half} ${LABEL[v]}s — remaining cells must be ${LABEL[other]}s.`,
+            reason: `Column ${c + 1} already has ${half} ${LABEL[v]}s, so the remaining cells must be ${LABEL[other]}s.`,
+            highlight: { type: 'col', col: c },
           }
         }
       }
     }
   }
 
-  // 3. No-three: XX_ or _XX must be opposite
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size - 1; c++) {
       const a = grid[r]![c]
@@ -101,7 +107,8 @@ export function findHint(
               row: r,
               col: c - 1,
               value: v,
-              reason: `Two ${LABEL[a]}s in a row — this cell must be a ${LABEL[v]} to avoid three in a row.`,
+              reason: `Two ${LABEL[a]}s are adjacent — the next cell must be a ${LABEL[v]} to avoid three in a row.`,
+              highlight: { type: 'row', row: r },
             }
           }
         }
@@ -112,13 +119,15 @@ export function findHint(
               row: r,
               col: c + 2,
               value: v,
-              reason: `Two ${LABEL[a]}s in a row — this cell must be a ${LABEL[v]} to avoid three in a row.`,
+              reason: `Two ${LABEL[a]}s are adjacent — the next cell must be a ${LABEL[v]} to avoid three in a row.`,
+              highlight: { type: 'row', row: r },
             }
           }
         }
       }
     }
   }
+
   for (let c = 0; c < size; c++) {
     for (let r = 0; r < size - 1; r++) {
       const a = grid[r]![c]
@@ -131,7 +140,8 @@ export function findHint(
               row: r - 1,
               col: c,
               value: v,
-              reason: `Two ${LABEL[a]}s stacked — this cell must be a ${LABEL[v]} to avoid three in a column.`,
+              reason: `Two ${LABEL[a]}s are stacked — this cell must be a ${LABEL[v]} to avoid three in a column.`,
+              highlight: { type: 'col', col: c },
             }
           }
         }
@@ -142,7 +152,8 @@ export function findHint(
               row: r + 2,
               col: c,
               value: v,
-              reason: `Two ${LABEL[a]}s stacked — this cell must be a ${LABEL[v]} to avoid three in a column.`,
+              reason: `Two ${LABEL[a]}s are stacked — this cell must be a ${LABEL[v]} to avoid three in a column.`,
+              highlight: { type: 'col', col: c },
             }
           }
         }
@@ -150,7 +161,6 @@ export function findHint(
     }
   }
 
-  // 4. Sandwich A _ A → middle opposite
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size - 2; c++) {
       const a = grid[r]![c]
@@ -163,12 +173,14 @@ export function findHint(
             row: r,
             col: c + 1,
             value: v,
-            reason: `Sandwich pattern: two ${LABEL[a]}s with a gap — middle must be ${LABEL[v]}.`,
+            reason: `Gap technique: ${LABEL[a]} · ${LABEL[a]} forces the middle cell to be a ${LABEL[v]}.`,
+            highlight: { type: 'row', row: r },
           }
         }
       }
     }
   }
+
   for (let c = 0; c < size; c++) {
     for (let r = 0; r < size - 2; r++) {
       const a = grid[r]![c]
@@ -181,14 +193,14 @@ export function findHint(
             row: r + 1,
             col: c,
             value: v,
-            reason: `Sandwich pattern: two ${LABEL[a]}s with a gap — middle must be ${LABEL[v]}.`,
+            reason: `Gap technique: ${LABEL[a]} · ${LABEL[a]} forces the middle cell to be a ${LABEL[v]}.`,
+            highlight: { type: 'col', col: c },
           }
         }
       }
     }
   }
 
-  // 5. Only one legal value for a cell
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
       if (grid[r]![c] !== null) continue
@@ -201,13 +213,13 @@ export function findHint(
           row: r,
           col: c,
           value: opts[0]!,
-          reason: `Only ${LABEL[opts[0]!]} fits here without breaking a rule.`,
+          reason: `Only a ${LABEL[opts[0]!]} fits here without breaking a rule.`,
+          highlight: { type: 'cell', row: r, col: c },
         }
       }
     }
   }
 
-  // Fallback: reveal a correct empty cell from solution
   for (let r = 0; r < size; r++) {
     for (let c = 0; c < size; c++) {
       if (grid[r]![c] === null) {
@@ -215,7 +227,8 @@ export function findHint(
           row: r,
           col: c,
           value: solution[r]![c]!,
-          reason: `This cell is a ${LABEL[solution[r]![c]!]} — keep going!`,
+          reason: `This cell is a ${LABEL[solution[r]![c]!]}.`,
+          highlight: { type: 'cell', row: r, col: c },
         }
       }
     }
@@ -224,7 +237,6 @@ export function findHint(
   return null
 }
 
-/** Apply hint and return new grid */
 export function applyHint(
   grid: CellValue[][],
   hint: HintResult,

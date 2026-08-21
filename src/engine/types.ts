@@ -10,7 +10,7 @@ export interface Constraint {
   type: ConstraintType
 }
 
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'very-hard'
+export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
 
 export interface Puzzle {
   size: number
@@ -18,7 +18,7 @@ export interface Puzzle {
   solution: (0 | 1)[][]
   constraints: Constraint[]
   difficulty: Difficulty
-  level: number
+  seed: string
 }
 
 export interface HintResult {
@@ -26,6 +26,12 @@ export interface HintResult {
   col: number
   value: 0 | 1
   reason: string
+  highlight?: {
+    type: 'cell' | 'row' | 'col' | 'constraint'
+    row?: number
+    col?: number
+    constraint?: Constraint
+  }
 }
 
 export interface Violation {

@@ -38,7 +38,7 @@ export function isLineBalanced(line: CellValue[]): boolean {
 
 export function lineWouldExceedBalance(line: CellValue[], value: 0 | 1): boolean {
   const half = line.length / 2
-  return countInLine(line, value) >= half
+  return countInLine(line, value) > half
 }
 
 export function canPlace(

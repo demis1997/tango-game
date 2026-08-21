@@ -1,0 +1,58 @@
+.stats.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1rem 0 2.5rem;
+}
+
+.page-head h1 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+}
+
+.stats section {
+  margin-top: 1.75rem;
+}
+
+.stats h2 {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.stat-card {
+  padding: 1rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-value {
+  font-size: 1.45rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.empty {
+  color: var(--muted);
+  margin-top: 0.75rem;
+}

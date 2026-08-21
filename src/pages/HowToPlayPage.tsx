@@ -1,84 +1,93 @@
+import { Link } from 'react-router-dom'
+import { MoonIcon, SunIcon } from '../components/icons'
+import './HowToPlayPage.css'
+
 export function HowToPlayPage() {
   return (
-    <div className="page narrow how-to">
+    <div className="how page">
       <header className="page-head">
-        <h1>How to play Tango</h1>
+        <h1>How to Play</h1>
         <p className="lede">
-          Fill every cell with a Sun or a Moon using logic alone. Same spirit as
-          Binairo / Takuzu — with “=” and “×” clues.
+          Fill the grid with Suns and Moons using logic — no guessing required.
         </p>
       </header>
 
       <section>
-        <h2>Goal</h2>
-        <p>
-          Complete the grid so every row and column follows the four rules below.
-          Red cells mean a rule is broken — fix them to finish.
-        </p>
-      </section>
-
-      <section>
-        <h2>1. Balance</h2>
-        <p>
-          Every row and every column must have exactly half Suns and half Moons.
-          On a 6×6 board that’s 3 of each; on 4×4 it’s 2; on 8×8 it’s 4; on 10×10
-          it’s 5.
-        </p>
-      </section>
-
-      <section>
-        <h2>2. No three in a row</h2>
-        <p>
-          Never place three identical symbols next to each other in a row or
-          column. Two in a row is fine; three is not.
-        </p>
-        <p className="example ok">✓ ☀ ☀ ☾ ☀ ☾ ☾</p>
-        <p className="example bad">✗ ☀ ☀ ☀ ☾ ☾ ☾</p>
-      </section>
-
-      <section>
-        <h2>3. “=” clue (same)</h2>
-        <p>
-          An “=” between two cells means those cells must be the same symbol.
-        </p>
-      </section>
-
-      <section>
-        <h2>4. “×” clue (different)</h2>
-        <p>
-          A “×” between two cells means those cells must be opposite symbols.
-        </p>
-      </section>
-
-      <section>
-        <h2>Controls</h2>
-        <ul>
-          <li>Click / tap a cell to cycle: Empty → Sun → Moon → Empty.</li>
-          <li>Given (pre-filled) cells cannot be changed.</li>
-          <li>Hint fills the next forced cell and explains why.</li>
-          <li>Undo and Reset help you recover from mistakes.</li>
-        </ul>
-      </section>
-
-      <section>
-        <h2>Journey</h2>
-        <p>
-          There are 1000 levels that ramp from easy 4×4 warm-ups to brutal 8×8
-          and 10×10 boards. Clear a level to unlock the next. Your best time is
-          saved so you can race yourself.
-        </p>
-      </section>
-
-      <section>
-        <h2>Tips</h2>
-        <ol>
-          <li>Scan clues first — a filled neighbor often forces the partner.</li>
-          <li>Count nearly-full rows and columns.</li>
-          <li>Hunt for pairs: XX_ and _XX must be the opposite symbol.</li>
-          <li>Look for sandwiches: A _ A forces the middle to be the opposite.</li>
-          <li>Chain deductions across both axes.</li>
+        <h2>The rules</h2>
+        <ol className="steps">
+          <li>
+            <strong>Fill every cell</strong> with a Sun or a Moon.
+            <div className="mini-row" aria-hidden>
+              <span className="chip sun">
+                <SunIcon />
+              </span>
+              <span className="chip moon">
+                <MoonIcon />
+              </span>
+            </div>
+          </li>
+          <li>
+            <strong>Balance:</strong> each row and column has the same number of
+            Suns and Moons (3 each on a 6×6 board).
+          </li>
+          <li>
+            <strong>No triples:</strong> never place three identical symbols in
+            a row or column.
+          </li>
+          <li>
+            <strong>=</strong> means adjacent cells are the <em>same</em>.
+          </li>
+          <li>
+            <strong>×</strong> means adjacent cells are <em>different</em>.
+          </li>
+          <li>
+            Every puzzle has one solution and can be finished by deduction.
+          </li>
         </ol>
       </section>
+
+      <section>
+        <h2>Strategy</h2>
+        <div className="strat">
+          <article>
+            <h3>Gap technique</h3>
+            <p className="diagram">
+              <SunIcon /> <span className="dot">·</span> <SunIcon />
+            </p>
+            <p>Middle must be a Moon — three Suns in a row are illegal.</p>
+          </article>
+          <article>
+            <h3>Doubles rule</h3>
+            <p className="diagram">
+              <MoonIcon /> <MoonIcon /> <span className="dot">·</span>
+            </p>
+            <p>After two Moons, the next cell must be a Sun.</p>
+          </article>
+          <article>
+            <h3>Counting</h3>
+            <p>
+              When a line already has its maximum of one symbol, every remaining
+              empty cell is the other.
+            </p>
+          </article>
+          <article>
+            <h3>Constraints</h3>
+            <p>
+              Propagate from known cells along = and × markers — one placement
+              often unlocks the next.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <p className="cta">
+        <Link className="link-btn primary" to="/">
+          Play today’s Daily
+        </Link>
+        <Link className="link-btn" to="/play">
+          Practice Unlimited
+        </Link>
+      </p>
     </div>
   )
 }

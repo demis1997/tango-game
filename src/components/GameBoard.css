@@ -1,0 +1,118 @@
+.game-board {
+  --gap: clamp(2px, 0.45vw, 4px);
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: var(--gap);
+  width: min(92vw, 580px);
+  aspect-ratio: 1;
+  padding: clamp(8px, 1.4vw, 12px);
+  border-radius: 18px;
+  background: var(--board-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--board-shadow);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.game-cell {
+  position: relative;
+  aspect-ratio: 1;
+  border: 1.5px solid var(--cell-border);
+  border-radius: 12px;
+  background: var(--cell-bg);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease,
+    transform 0.08s ease;
+  color: var(--ink);
+}
+
+.game-cell:not(:disabled):hover {
+  background: var(--cell-hover);
+  transform: scale(1.02);
+}
+
+.game-cell:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.game-cell.is-given {
+  cursor: default;
+  background: var(--cell-given);
+}
+
+.game-cell.is-sun {
+  color: var(--sun);
+}
+
+.game-cell.is-moon {
+  color: var(--moon);
+}
+
+.game-cell.is-invalid {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.game-cell.is-hint {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.game-cell.is-line-hint {
+  background: var(--accent-soft);
+}
+
+.cell-icon {
+  width: 58%;
+  height: 58%;
+  pointer-events: none;
+}
+
+.mark {
+  position: absolute;
+  z-index: 2;
+  font-size: clamp(11px, 2.2vw, 15px);
+  font-weight: 700;
+  line-height: 1;
+  min-width: 1.1em;
+  text-align: center;
+  color: var(--mark);
+  background: var(--board-bg);
+  border-radius: 4px;
+  padding: 1px 2px;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.mark-h {
+  right: 0;
+  top: 50%;
+  transform: translate(50%, -50%);
+}
+
+.mark-v {
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+}
+
+.mark-neq {
+  color: var(--danger);
+}
+
+@media (max-width: 480px) {
+  .game-board {
+    width: calc(100vw - 32px);
+    border-radius: 14px;
+    padding: 6px;
+  }
+
+  .game-cell {
+    border-radius: 8px;
+  }
+}
